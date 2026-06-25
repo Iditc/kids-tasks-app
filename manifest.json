@@ -2,7 +2,7 @@
   "name": "מעקב משימות",
   "short_name": "משימות",
   "description": "אפליקציית מעקב משימות לילדים",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F0F4FF",
   "theme_color": "#6C63FF",
