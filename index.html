@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#6C63FF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <title>מעקב משימות</title>
+</head>
+<body>
+  <div id="app">
+
+    <!-- Home: Child Selection -->
+    <div id="screen-home" class="screen active">
+      <div class="header">
+        <h1>👋 מי אני?</h1>
+        <button class="btn-icon parent-btn" onclick="showPinPrompt()">⚙️</button>
+      </div>
+      <div id="children-grid" class="children-grid"></div>
+      <p id="no-children-msg" class="empty-msg">
+        אין ילדים עדיין<br>
+        <span>לחצו על ⚙️ כדי להוסיף</span>
+      </p>
+    </div>
+
+    <!-- Child Dashboard -->
+    <div id="screen-child" class="screen">
+      <div class="header child-header">
+        <button class="btn-icon" onclick="goHome()">→</button>
+        <div class="child-info">
+          <span id="child-avatar" class="child-avatar-lg"></span>
+          <span id="child-name" class="child-name-lg"></span>
+        </div>
+        <div class="coins-display" onclick="showStore()">
+          <span id="child-coins">0</span>
+          <span class="coin-icon">🪙</span>
+        </div>
+      </div>
+
+      <div id="daily-progress" class="progress-bar-container">
+        <div id="daily-progress-fill" class="progress-bar-fill"></div>
+        <span id="daily-progress-text" class="progress-text"></span>
+      </div>
+
+      <div id="daily-section" class="task-section">
+        <h2>📅 משימות יומיות</h2>
+        <div id="daily-tasks" class="task-list"></div>
+      </div>
+
+      <div id="weekly-section" class="task-section">
+        <h2>📆 משימות שבועיות</h2>
+        <div id="weekly-tasks" class="task-list"></div>
+      </div>
+
+      <button class="store-btn" onclick="showStore()">
+        🎁 חנות מתנות
+      </button>
+    </div>
+
+    <!-- Reward Store -->
+    <div id="screen-store" class="screen">
+      <div class="header">
+        <button class="btn-icon" onclick="goToChild()">→</button>
+        <h1>🎁 חנות מתנות</h1>
+        <div class="coins-display">
+          <span id="store-coins">0</span>
+          <span class="coin-icon">🪙</span>
+        </div>
+      </div>
+      <div id="rewards-list" class="rewards-list"></div>
+    </div>
+
+    <!-- Parent Panel -->
+    <div id="screen-parent" class="screen">
+      <div class="header">
+        <button class="btn-icon" onclick="goHome()">→</button>
+        <h1>⚙️ ניהול</h1>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="tab-children">ילדים</button>
+        <button class="tab" data-tab="tab-tasks">משימות</button>
+        <button class="tab" data-tab="tab-rewards">מתנות</button>
+        <button class="tab" data-tab="tab-settings">הגדרות</button>
+      </div>
+
+      <!-- Children Tab -->
+      <div id="tab-children" class="tab-content active">
+        <div id="manage-children-list" class="manage-list"></div>
+        <div class="add-form">
+          <h3>הוספת ילד/ה</h3>
+          <input type="text" id="new-child-name" placeholder="שם" maxlength="20">
+          <div class="avatar-picker" id="avatar-picker"></div>
+          <button class="btn-primary" onclick="addChild()">הוסף</button>
+        </div>
+      </div>
+
+      <!-- Tasks Tab -->
+      <div id="tab-tasks" class="tab-content">
+        <div id="manage-tasks-list" class="manage-list"></div>
+        <div class="add-form">
+          <h3>הוספת משימה</h3>
+          <input type="text" id="new-task-name" placeholder="שם המשימה" maxlength="30">
+          <div class="form-row">
+            <div class="form-group">
+              <label>מטבעות</label>
+              <input type="number" id="new-task-coins" value="2" min="1" max="50">
+            </div>
+            <div class="form-group">
+              <label>תדירות</label>
+              <select id="new-task-freq" onchange="onFreqChange()">
+                <option value="daily">יומית</option>
+                <option value="weekly">שבועית</option>
+              </select>
+            </div>
+          </div>
+          <div id="day-picker-row" class="form-row" style="display:none">
+            <div class="form-group">
+              <label>באיזה יום?</label>
+              <select id="new-task-day">
+                <option value="0">ראשון</option>
+                <option value="1">שני</option>
+                <option value="2">שלישי</option>
+                <option value="3">רביעי</option>
+                <option value="4">חמישי</option>
+                <option value="5">שישי</option>
+                <option value="6">שבת</option>
+              </select>
+            </div>
+          </div>
+          <div class="emoji-picker" id="task-emoji-picker"></div>
+          <h4 class="form-subtitle">שיוך לילדים (ריק = כולם)</h4>
+          <div id="task-child-picker" class="child-picker"></div>
+          <button class="btn-primary" onclick="addTask()">הוסף</button>
+        </div>
+      </div>
+
+      <!-- Rewards Tab -->
+      <div id="tab-rewards" class="tab-content">
+        <div id="manage-rewards-list" class="manage-list"></div>
+        <div class="add-form">
+          <h3>הוספת מתנה</h3>
+          <input type="text" id="new-reward-name" placeholder="שם המתנה" maxlength="30">
+          <div class="form-row">
+            <div class="form-group">
+              <label>מחיר (מטבעות)</label>
+              <input type="number" id="new-reward-cost" value="10" min="1" max="500">
+            </div>
+          </div>
+          <div class="emoji-picker" id="reward-emoji-picker"></div>
+          <button class="btn-primary" onclick="addReward()">הוסף</button>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="tab-settings" class="tab-content">
+        <div class="add-form">
+          <h3>שינוי קוד הורה</h3>
+          <input type="number" id="new-pin" placeholder="קוד חדש (4 ספרות)" maxlength="4">
+          <button class="btn-primary" onclick="changePin()">שמור</button>
+        </div>
+
+        <div class="add-form" style="margin-top:16px">
+          <h3>איפוס מטבעות</h3>
+          <p class="reset-desc">איפוס המטבעות של כל הילדים לאפס</p>
+          <button class="btn-danger" onclick="resetCoins()">🪙 אפס מטבעות</button>
+        </div>
+
+        <div class="add-form" style="margin-top:16px">
+          <h3>איפוס מלא</h3>
+          <p class="reset-desc">מחיקת כל הנתונים — ילדים, משימות, מתנות ומטבעות</p>
+          <button class="btn-danger" onclick="resetAll()">⚠️ אפס הכל</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN Modal -->
+    <div id="pin-modal" class="modal" onclick="closePinModal(event)">
+      <div class="modal-content">
+        <h2>🔒 קוד הורה</h2>
+        <input type="password" id="pin-input" placeholder="הכנס קוד" maxlength="4" inputmode="numeric">
+        <button class="btn-primary" onclick="verifyPin()">אישור</button>
+        <p id="pin-error" class="error-text"></p>
+      </div>
+    </div>
+
+    <!-- Coin Animation -->
+    <div id="coin-animation" class="coin-animation">🪙</div>
+
+    <!-- Confetti -->
+    <div id="confetti-container" class="confetti-container"></div>
+
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
