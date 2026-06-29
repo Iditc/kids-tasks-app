@@ -283,6 +283,9 @@ function migrateData(d) {
   if (!d.tasks) d.tasks = [];
   if (!d.rewards) d.rewards = [];
   if (!d.children) d.children = [];
+  if (!Array.isArray(d.children)) d.children = Object.values(d.children);
+  if (!Array.isArray(d.tasks)) d.tasks = Object.values(d.tasks);
+  if (!Array.isArray(d.rewards)) d.rewards = Object.values(d.rewards);
   d.tasks.forEach(t => {
     if (!t.assignedTo) t.assignedTo = [];
     if (t.dayOfWeek === undefined) t.dayOfWeek = null;
@@ -388,6 +391,7 @@ function goToChild() {
 // ── Home Screen ──
 
 function renderHome() {
+  console.log('renderHome called, data:', data ? 'exists' : 'null', 'children:', data ? data.children : 'N/A');
   if (!data) return;
   const grid = document.getElementById('children-grid');
   const msg = document.getElementById('no-children-msg');
@@ -573,7 +577,7 @@ function closePinModal(e) {
 
 function verifyPin() {
   const pin = document.getElementById('pin-input').value;
-  if (pin === data.parentPin) {
+  if (pin === String(data.parentPin)) {
     document.getElementById('pin-modal').classList.remove('active');
     showScreen('screen-parent');
     renderParent();
