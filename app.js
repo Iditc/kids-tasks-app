@@ -148,7 +148,9 @@ async function registerUser() {
       lastActive: new Date().toISOString().split('T')[0],
     });
 
-    alert('נרשמת בהצלחה! 🎉');
+    alert('נרשמת בהצלחה! 🎉\nלחצ/י על כפתור הכניסה כדי להיכנס.');
+    showLoginTab('login');
+    document.getElementById('login-email').value = email;
   } catch (e) {
     errorEl.textContent = authErrorMessage(e.code);
   }
