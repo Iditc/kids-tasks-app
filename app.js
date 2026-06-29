@@ -116,26 +116,35 @@ async function registerUser() {
     const uid = cred.user.uid;
     const newFamilyId = genId();
 
-    let familyData = defaultFamilyData();
-
     if (email.toLowerCase() === ADMIN_EMAIL) {
-      const oldSnap = await db.ref('data').once('value');
-      if (oldSnap.exists()) {
-        familyData = migrateData(oldSnap.val());
-      }
       await db.ref('admin/uids/' + uid).set(true);
     }
 
-    familyData.parentUid = uid;
-    familyData.parentEmail = email;
-    familyData.familyName = name;
-    familyData.createdAt = new Date().toISOString();
+    let existingFamilyId = null;
+    const familiesSnap = await db.ref('families').once('value');
+    const allFamilies = familiesSnap.val() || {};
+    for (const [fid, fam] of Object.entries(allFamilies)) {
+      if (fam.parentEmail === email) {
+        existingFamilyId = fid;
+        await db.ref('families/' + fid + '/parentUid').set(uid);
+        break;
+      }
+    }
 
-    await db.ref('families/' + newFamilyId).set(familyData);
+    if (!existingFamilyId) {
+      const familyData = defaultFamilyData();
+      familyData.parentUid = uid;
+      familyData.parentEmail = email;
+      familyData.familyName = name;
+      familyData.createdAt = new Date().toISOString();
+      await db.ref('families/' + newFamilyId).set(familyData);
+      existingFamilyId = newFamilyId;
+    }
+
     await db.ref('users/' + uid).set({
       email: email,
       displayName: name,
-      familyId: newFamilyId,
+      familyId: existingFamilyId,
       lastActive: new Date().toISOString().split('T')[0],
     });
 
@@ -191,40 +200,56 @@ function authErrorMessage(code) {
 // ── Auth State Listener ──
 
 auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    currentUser = user;
+  try {
+    if (user) {
+      currentUser = user;
 
-    const today = new Date().toISOString().split('T')[0];
-    db.ref('users/' + user.uid + '/lastActive').set(today);
+      const today = new Date().toISOString().split('T')[0];
+      db.ref('users/' + user.uid + '/lastActive').set(today).catch(() => {});
 
-    const adminSnap = await db.ref('admin/uids/' + user.uid).once('value');
-    isAdmin = adminSnap.exists();
+      let adminResult = false;
+      try {
+        const adminSnap = await db.ref('admin/uids/' + user.uid).once('value');
+        adminResult = adminSnap.exists();
+      } catch (e) {}
+      isAdmin = adminResult;
 
-    const userSnap = await db.ref('users/' + user.uid).once('value');
-    const userData = userSnap.val();
+      const userSnap = await db.ref('users/' + user.uid).once('value');
+      const userData = userSnap.val();
 
-    if (userData && userData.familyId) {
-      familyId = userData.familyId;
-      attachListener();
-      showScreen('screen-home');
+      if (userData && userData.familyId) {
+        familyId = userData.familyId;
+        attachListener();
+        showScreen('screen-home');
 
-      const adminBtn = document.getElementById('admin-btn');
-      if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        const adminBtn = document.getElementById('admin-btn');
+        if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
-      const infoEl = document.getElementById('account-info');
-      if (infoEl) infoEl.textContent = 'מחובר/ת כ: ' + user.email;
+        const infoEl = document.getElementById('account-info');
+        if (infoEl) infoEl.textContent = 'מחובר/ת כ: ' + user.email;
+      } else {
+        showScreen('screen-login');
+      }
     } else {
+      currentUser = null;
+      familyId = null;
+      isAdmin = false;
+      data = null;
+      detachListener();
       showScreen('screen-login');
     }
-  } else {
-    currentUser = null;
-    familyId = null;
-    isAdmin = false;
-    data = null;
-    detachListener();
+  } catch (e) {
+    console.error('Auth error:', e);
     showScreen('screen-login');
   }
 });
+
+setTimeout(() => {
+  const s = document.querySelector('.screen.active');
+  if (s && s.id === 'screen-loading') {
+    showScreen('screen-login');
+  }
+}, 5000);
 
 // ── Data ──
 
