@@ -215,7 +215,33 @@ auth.onAuthStateChanged(async (user) => {
       isAdmin = adminResult;
 
       const userSnap = await db.ref('users/' + user.uid).once('value');
-      const userData = userSnap.val();
+      let userData = userSnap.val();
+
+      if (!userData || !userData.familyId) {
+        const familiesSnap = await db.ref('families').once('value');
+        const allFamilies = familiesSnap.val() || {};
+        let foundFamilyId = null;
+
+        for (const [fid, fam] of Object.entries(allFamilies)) {
+          if (fam.parentEmail === user.email || fam.parentUid === user.uid) {
+            foundFamilyId = fid;
+            if (fam.parentUid !== user.uid) {
+              await db.ref('families/' + fid + '/parentUid').set(user.uid);
+            }
+            break;
+          }
+        }
+
+        if (foundFamilyId) {
+          userData = {
+            email: user.email,
+            displayName: allFamilies[foundFamilyId].familyName || user.email,
+            familyId: foundFamilyId,
+            lastActive: today,
+          };
+          await db.ref('users/' + user.uid).set(userData);
+        }
+      }
 
       if (userData && userData.familyId) {
         familyId = userData.familyId;
