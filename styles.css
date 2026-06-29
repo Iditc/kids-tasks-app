@@ -830,6 +830,30 @@ body {
   text-decoration: underline;
 }
 
+.password-field {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.password-field input {
+  width: 100%;
+  padding: 14px 16px;
+  padding-left: 48px;
+  margin-bottom: 0 !important;
+}
+
+.toggle-password {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
 .btn-link {
   background: none;
   border: none;

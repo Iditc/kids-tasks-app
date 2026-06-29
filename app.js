@@ -138,6 +138,8 @@ async function registerUser() {
       familyId: newFamilyId,
       lastActive: new Date().toISOString().split('T')[0],
     });
+
+    alert('נרשמת בהצלחה! 🎉');
   } catch (e) {
     errorEl.textContent = authErrorMessage(e.code);
   }
@@ -160,6 +162,17 @@ async function resetPassword() {
 function logoutUser() {
   detachListener();
   auth.signOut();
+}
+
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
 }
 
 function authErrorMessage(code) {
@@ -193,6 +206,7 @@ auth.onAuthStateChanged(async (user) => {
     if (userData && userData.familyId) {
       familyId = userData.familyId;
       attachListener();
+      showScreen('screen-home');
 
       const adminBtn = document.getElementById('admin-btn');
       if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';

@@ -40,7 +40,10 @@
 
         <div id="login-form" class="login-form">
           <input type="email" id="login-email" placeholder="אימייל" autocomplete="email">
-          <input type="password" id="login-password" placeholder="סיסמה" autocomplete="current-password">
+          <div class="password-field">
+            <input type="password" id="login-password" placeholder="סיסמה" autocomplete="current-password">
+            <button type="button" class="toggle-password" onclick="togglePassword('login-password', this)">👁️</button>
+          </div>
           <button class="btn-primary" onclick="loginUser()">כניסה</button>
           <p id="login-error" class="error-text"></p>
           <button class="btn-link" onclick="resetPassword()">שכחתי סיסמה</button>
@@ -49,7 +52,10 @@
         <div id="register-form" class="login-form" style="display:none">
           <input type="text" id="register-name" placeholder="שם המשפחה" maxlength="30">
           <input type="email" id="register-email" placeholder="אימייל" autocomplete="email">
-          <input type="password" id="register-password" placeholder="סיסמה (לפחות 6 תווים)" autocomplete="new-password">
+          <div class="password-field">
+            <input type="password" id="register-password" placeholder="סיסמה (לפחות 6 תווים)" autocomplete="new-password">
+            <button type="button" class="toggle-password" onclick="togglePassword('register-password', this)">👁️</button>
+          </div>
           <label class="terms-check">
             <input type="checkbox" id="register-terms">
             <span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank">תנאי השימוש</a> ול<a href="privacy.html" target="_blank">מדיניות הפרטיות</a></span>
