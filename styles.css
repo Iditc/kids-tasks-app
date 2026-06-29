@@ -681,3 +681,246 @@ body {
   font-size: 1.05rem;
   animation: fadeIn 0.5s ease;
 }
+
+/* Header Buttons */
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Loading Screen */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+}
+
+.loading-emoji {
+  font-size: 4rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.loading-container p {
+  font-size: 1.1rem;
+  color: var(--text-light);
+}
+
+/* Login Screen */
+.login-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding-top: 20px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-logo {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.login-header h1 {
+  font-size: 1.6rem;
+  color: var(--primary);
+}
+
+.login-subtitle {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.beta-banner {
+  background: #FFF3CD;
+  border: 1px solid #FFD93D;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #856404;
+}
+
+.login-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  background: #E8E4FF;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: all 0.2s;
+}
+
+.login-tab.active {
+  background: var(--primary);
+  color: white;
+}
+
+.login-form {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  box-shadow: var(--shadow);
+}
+
+.login-form input[type="email"],
+.login-form input[type="password"],
+.login-form input[type="text"] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #E8E4FF;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  background: #FAFAFF;
+  direction: rtl;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.terms-check input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.terms-check a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 8px 0;
+  display: block;
+  text-align: center;
+  width: 100%;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+/* Admin Dashboard */
+.admin-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.stat-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+.admin-section {
+  margin-bottom: 20px;
+}
+
+.admin-section h3 {
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+/* Usage Chart */
+.usage-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.usage-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.usage-name { font-weight: 600; }
+.usage-days { font-size: 0.8rem; }
+
+.usage-today {
+  background: #D4EDDA;
+  color: #155724;
+}
+
+.usage-recent {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.usage-week {
+  background: #FFF8E1;
+  color: #856404;
+}
+
+.usage-inactive {
+  background: #FFE8E8;
+  color: #C62828;
+}

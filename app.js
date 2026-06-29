@@ -1,43 +1,223 @@
-const AVATARS = ['🦁','🐱','🐶','🦊','🐰','🐼','🦄','🐸','🐯','🐨','❤️','💎','😊','😎','🌟','🦋','🌈','👑','🤴','👸','🐝','🌸','💜','🔥','🍀','🎀','😺'];
-const TASK_EMOJIS = ['👕','🥣','💊','🪥','🛏️','📚','⭐','🎒','🏃','🧹','🐕','🎹','🖌️','✏️','🧺','🛁','🎸','🎻','🎤','🥁','🎵','⚽','🏀','🏊','🤸','🥋','🚴','⛺','🔥','🏕️','💉','🩺','🏥','🩸','💊','🧪','🎨','🧩','💻','📐','🔬','🤝','✂️','💅'];
-
-const REWARD_EMOJIS = ['🎲','🎬','📱','🍦','🎮','🛝','🧩','📖','🎨','🏊','♟️','💰','💵','🪙','🎁','🧸','🎠','🎢','🎪','🏆','👟','👗','🎧','🍕','🍫','🛍️'];
-const DAYS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-
-const DEFAULT_DATA = {
-  parentPin: '1234',
-  children: [],
-  tasks: [
-    { id: genId(), name: 'להתלבש', coins: 2, frequency: 'daily', emoji: '👕', assignedTo: [], dayOfWeek: null },
-    { id: genId(), name: 'ארוחת בוקר', coins: 2, frequency: 'daily', emoji: '🥣', assignedTo: [], dayOfWeek: null },
-    { id: genId(), name: 'תרופות', coins: 3, frequency: 'daily', emoji: '💊', assignedTo: [], dayOfWeek: null },
-    { id: genId(), name: 'צחצוח שיניים בוקר', coins: 2, frequency: 'daily', emoji: '🪥', assignedTo: [], dayOfWeek: null },
-    { id: genId(), name: 'צחצוח שיניים ערב', coins: 2, frequency: 'daily', emoji: '🪥', assignedTo: [], dayOfWeek: null },
-    { id: genId(), name: 'סידור חדר', coins: 3, frequency: 'daily', emoji: '🛏️', assignedTo: [], dayOfWeek: null },
-    { id: genId(), name: 'חוג', coins: 5, frequency: 'weekly', emoji: '⭐', assignedTo: [], dayOfWeek: 2 },
-  ],
-  rewards: [
-    { id: genId(), name: 'משחק עם אמא', cost: 10, emoji: '🎲' },
-    { id: genId(), name: 'סרט', cost: 15, emoji: '🎬' },
-    { id: genId(), name: '30 דק׳ מסך', cost: 8, emoji: '📱' },
-  ],
-  completions: {},
+// ── Firebase Config ──
+// Replace YOUR_API_KEY, YOUR_SENDER_ID, YOUR_APP_ID with values from Firebase Console
+// Firebase Console → Project Settings → General → Your apps → Web app
+const firebaseConfig = {
+  apiKey: "AIzaSyAcIpv4ypEbVI5bnTX6gWa71pdTqUZaSvM",
+  authDomain: "kids-tasks-9a6bc.firebaseapp.com",
+  databaseURL: "https://kids-tasks-9a6bc-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kids-tasks-9a6bc",
+  storageBucket: "kids-tasks-9a6bc.firebasestorage.app",
+  messagingSenderId: "513481769811",
+  appId: "1:513481769811:web:e0ad4a7355cd574664d7a6"
 };
 
-const FIREBASE_URL = 'https://kids-tasks-9a6bc-default-rtdb.europe-west1.firebasedatabase.app';
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
-let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+const ADMIN_EMAIL = 'cohen.idit10@gmail.com';
+
+// ── Constants ──
+
+const AVATARS = ['🦁','🐱','🐶','🦊','🐰','🐼','🦄','🐸','🐯','🐨','❤️','💎','😊','😎','🌟','🦋','🌈','👑','🤴','👸','🐝','🌸','💜','🔥','🍀','🎀','😺'];
+const TASK_EMOJIS = ['👕','🥣','💊','🪥','🛏️','📚','⭐','🎒','🏃','🧹','🐕','🎹','🖌️','✏️','🧺','🛁','🎸','🎻','🎤','🥁','🎵','⚽','🏀','🏊','🤸','🥋','🚴','⛺','🔥','🏕️','💉','🩺','🏥','🩸','💊','🧪','🎨','🧩','💻','📐','🔬','🤝','✂️','💅'];
+const REWARD_EMOJIS = ['🎲','🎬','📱','🍦','🎮','🛝','🧩','📖','🎨','🏊','♟️','💰','💵','🪙','🎁','🧸','🎠','🎢','🎪','🏆','👟','👗','🎧','🍕','🍫','🛍️','🏖️'];
+const DAYS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+function genId() {
+  return Math.random().toString(36).substring(2, 9);
+}
+
+function defaultTasks() {
+  return [
+    { id: genId(), name: 'צחצוח שיניים בוקר', coins: 5, frequency: 'daily', emoji: '🪥', assignedTo: [], dayOfWeek: null },
+    { id: genId(), name: 'צחצוח שיניים ערב', coins: 5, frequency: 'daily', emoji: '🪥', assignedTo: [], dayOfWeek: null },
+    { id: genId(), name: 'להתלבש לבד', coins: 5, frequency: 'daily', emoji: '👕', assignedTo: [], dayOfWeek: null },
+    { id: genId(), name: 'מקלחת', coins: 5, frequency: 'daily', emoji: '🛁', assignedTo: [], dayOfWeek: null },
+  ];
+}
+
+function defaultRewards() {
+  return [
+    { id: genId(), name: 'זמן מסך 30 דקות', cost: 100, emoji: '📱' },
+    { id: genId(), name: 'משחק עם אמא', cost: 100, emoji: '🎲' },
+    { id: genId(), name: 'משחק עם אבא', cost: 100, emoji: '🎲' },
+    { id: genId(), name: 'חטיף', cost: 100, emoji: '🍫' },
+    { id: genId(), name: 'ים', cost: 100, emoji: '🏖️' },
+  ];
+}
+
+function defaultFamilyData() {
+  return {
+    parentPin: '1234',
+    children: [],
+    tasks: defaultTasks(),
+    rewards: defaultRewards(),
+    completions: {},
+  };
+}
+
+// ── State ──
+
+let currentUser = null;
+let familyId = null;
+let isAdmin = false;
+let data = null;
+let dataListener = null;
 let currentChildId = null;
 let selectedAvatar = AVATARS[0];
 let selectedTaskEmoji = TASK_EMOJIS[0];
 let selectedRewardEmoji = REWARD_EMOJIS[0];
 let newTaskChildIds = [];
 
-function genId() {
-  return Math.random().toString(36).substring(2, 9);
+// ── Auth UI ──
+
+function showLoginTab(tab) {
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.login-tab').forEach((t, i) => {
+    t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+  });
 }
 
+async function loginUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  errorEl.textContent = '';
+
+  if (!email || !password) {
+    errorEl.textContent = 'נא למלא אימייל וסיסמה';
+    return;
+  }
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (e) {
+    errorEl.textContent = authErrorMessage(e.code);
+  }
+}
+
+async function registerUser() {
+  const name = document.getElementById('register-name').value.trim();
+  const email = document.getElementById('register-email').value.trim();
+  const password = document.getElementById('register-password').value;
+  const terms = document.getElementById('register-terms').checked;
+  const errorEl = document.getElementById('register-error');
+  errorEl.textContent = '';
+
+  if (!name) { errorEl.textContent = 'נא להזין שם משפחה'; return; }
+  if (!email) { errorEl.textContent = 'נא להזין אימייל'; return; }
+  if (password.length < 6) { errorEl.textContent = 'סיסמה חייבת להכיל לפחות 6 תווים'; return; }
+  if (!terms) { errorEl.textContent = 'נא לאשר את תנאי השימוש'; return; }
+
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const uid = cred.user.uid;
+    const newFamilyId = genId();
+
+    let familyData = defaultFamilyData();
+
+    if (email.toLowerCase() === ADMIN_EMAIL) {
+      const oldSnap = await db.ref('data').once('value');
+      if (oldSnap.exists()) {
+        familyData = migrateData(oldSnap.val());
+      }
+      await db.ref('admin/uids/' + uid).set(true);
+    }
+
+    familyData.parentUid = uid;
+    familyData.parentEmail = email;
+    familyData.familyName = name;
+    familyData.createdAt = new Date().toISOString();
+
+    await db.ref('families/' + newFamilyId).set(familyData);
+    await db.ref('users/' + uid).set({
+      email: email,
+      displayName: name,
+      familyId: newFamilyId,
+      lastActive: new Date().toISOString().split('T')[0],
+    });
+  } catch (e) {
+    errorEl.textContent = authErrorMessage(e.code);
+  }
+}
+
+async function resetPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) {
+    document.getElementById('login-error').textContent = 'נא להזין אימייל לאיפוס סיסמה';
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    alert('נשלח מייל לאיפוס סיסמה');
+  } catch (e) {
+    document.getElementById('login-error').textContent = authErrorMessage(e.code);
+  }
+}
+
+function logoutUser() {
+  detachListener();
+  auth.signOut();
+}
+
+function authErrorMessage(code) {
+  const m = {
+    'auth/email-already-in-use': 'האימייל כבר רשום. נסו להתחבר',
+    'auth/invalid-email': 'כתובת אימייל לא תקינה',
+    'auth/weak-password': 'סיסמה חלשה מדי (לפחות 6 תווים)',
+    'auth/user-not-found': 'משתמש לא נמצא',
+    'auth/wrong-password': 'סיסמה שגויה',
+    'auth/invalid-credential': 'אימייל או סיסמה שגויים',
+    'auth/too-many-requests': 'יותר מדי ניסיונות. נסו שוב מאוחר יותר',
+  };
+  return m[code] || 'שגיאה: ' + code;
+}
+
+// ── Auth State Listener ──
+
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUser = user;
+
+    const today = new Date().toISOString().split('T')[0];
+    db.ref('users/' + user.uid + '/lastActive').set(today);
+
+    const adminSnap = await db.ref('admin/uids/' + user.uid).once('value');
+    isAdmin = adminSnap.exists();
+
+    const userSnap = await db.ref('users/' + user.uid).once('value');
+    const userData = userSnap.val();
+
+    if (userData && userData.familyId) {
+      familyId = userData.familyId;
+      attachListener();
+
+      const adminBtn = document.getElementById('admin-btn');
+      if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+
+      const infoEl = document.getElementById('account-info');
+      if (infoEl) infoEl.textContent = 'מחובר/ת כ: ' + user.email;
+    } else {
+      showScreen('screen-login');
+    }
+  } else {
+    currentUser = null;
+    familyId = null;
+    isAdmin = false;
+    data = null;
+    detachListener();
+    showScreen('screen-login');
+  }
+});
+
+// ── Data ──
+
 function migrateData(d) {
+  if (!d.tasks) d.tasks = [];
+  if (!d.rewards) d.rewards = [];
+  if (!d.children) d.children = [];
   d.tasks.forEach(t => {
     if (!t.assignedTo) t.assignedTo = [];
     if (t.dayOfWeek === undefined) t.dayOfWeek = null;
@@ -46,25 +226,48 @@ function migrateData(d) {
   return d;
 }
 
-async function loadData() {
-  try {
-    const res = await fetch(FIREBASE_URL + '/data.json');
-    if (res.ok) {
-      const serverData = await res.json();
-      if (serverData) return migrateData(serverData);
+function attachListener() {
+  detachListener();
+  dataListener = db.ref('families/' + familyId).on('value', (snapshot) => {
+    const val = snapshot.val();
+    if (val) {
+      data = migrateData(val);
+      const nameEl = document.getElementById('family-name');
+      if (nameEl) nameEl.textContent = data.familyName || 'מי אני?';
+      renderActiveScreen();
     }
-  } catch (e) {}
-  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  });
 }
 
-function saveData(d) {
-  const toSave = d || data;
-  fetch(FIREBASE_URL + '/data.json', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(toSave),
-  }).catch(() => {});
+function detachListener() {
+  if (familyId && dataListener) {
+    db.ref('families/' + familyId).off('value', dataListener);
+  }
+  dataListener = null;
 }
+
+function saveData() {
+  if (!familyId || !data) return;
+  db.ref('families/' + familyId).set(data).catch(() => {});
+}
+
+function renderActiveScreen() {
+  const s = document.querySelector('.screen.active');
+  if (!s) return;
+  if (s.id === 'screen-loading') {
+    showScreen('screen-home');
+    renderHome();
+    return;
+  }
+  switch (s.id) {
+    case 'screen-home': renderHome(); break;
+    case 'screen-child': renderChild(); break;
+    case 'screen-store': renderStore(); break;
+    case 'screen-parent': renderParent(); break;
+  }
+}
+
+// ── Date Helpers ──
 
 function getDateKey() {
   return new Date().toISOString().split('T')[0];
@@ -78,9 +281,9 @@ function getWeekKey() {
 }
 
 function completionKey(childId, taskId, frequency) {
-  if (frequency === 'once') return `${childId}_${taskId}_once`;
+  if (frequency === 'once') return childId + '_' + taskId + '_once';
   const dk = frequency === 'weekly' ? getWeekKey() : getDateKey();
-  return `${childId}_${taskId}_${dk}`;
+  return childId + '_' + taskId + '_' + dk;
 }
 
 function isCompleted(childId, taskId, frequency) {
@@ -120,6 +323,7 @@ function goToChild() {
 // ── Home Screen ──
 
 function renderHome() {
+  if (!data) return;
   const grid = document.getElementById('children-grid');
   const msg = document.getElementById('no-children-msg');
 
@@ -161,6 +365,7 @@ function getChildTasks(childId, frequency) {
 }
 
 function renderChild() {
+  if (!data) return;
   const child = data.children.find(c => c.id === currentChildId);
   if (!child) return goHome();
 
@@ -186,7 +391,7 @@ function renderChild() {
 
   document.getElementById('daily-progress-fill').style.width = pct + '%';
   document.getElementById('daily-progress-text').textContent =
-    totalDaily > 0 ? `${completedDaily} / ${totalDaily}` : '';
+    totalDaily > 0 ? completedDaily + ' / ' + totalDaily : '';
 
   const banner = document.querySelector('.all-done-banner');
   if (banner) banner.remove();
@@ -251,6 +456,7 @@ function showStore() {
 }
 
 function renderStore() {
+  if (!data) return;
   const child = data.children.find(c => c.id === currentChildId);
   if (!child) return;
 
@@ -277,7 +483,7 @@ function redeemReward(rewardId) {
   const reward = data.rewards.find(r => r.id === rewardId);
   if (!child || !reward || child.coins < reward.cost) return;
 
-  if (!confirm(`להמיר ${reward.cost} מטבעות ל"${reward.name}"?`)) return;
+  if (!confirm('להמיר ' + reward.cost + ' מטבעות ל"' + reward.name + '"?')) return;
 
   child.coins -= reward.cost;
   saveData();
@@ -342,9 +548,9 @@ document.querySelectorAll('.tab').forEach(tab => {
 
 function renderBonusSelect() {
   const select = document.getElementById('bonus-child');
-  if (!select) return;
+  if (!select || !data) return;
   select.innerHTML = data.children.map(c =>
-    `<option value="${c.id}">${c.avatar} ${c.name}</option>`
+    '<option value="' + c.id + '">' + c.avatar + ' ' + c.name + '</option>'
   ).join('');
 }
 
@@ -358,19 +564,20 @@ function giveBonus() {
   if (!child) return;
 
   const msg = reason
-    ? `לתת ${amount} מטבעות בונוס ל${child.name} על "${reason}"?`
-    : `לתת ${amount} מטבעות בונוס ל${child.name}?`;
+    ? 'לתת ' + amount + ' מטבעות בונוס ל' + child.name + ' על "' + reason + '"?'
+    : 'לתת ' + amount + ' מטבעות בונוס ל' + child.name + '?';
   if (!confirm(msg)) return;
 
   child.coins += amount;
   saveData();
   document.getElementById('bonus-amount').value = '5';
   document.getElementById('bonus-reason').value = '';
-  alert(`${child.name} קיבל/ה ${amount} מטבעות! 🎉`);
+  alert(child.name + ' קיבל/ה ' + amount + ' מטבעות! 🎉');
   renderManageChildren();
 }
 
 function renderManageChildren() {
+  if (!data) return;
   const list = document.getElementById('manage-children-list');
   list.innerHTML = data.children.map(child => `
     <div class="manage-item">
@@ -420,7 +627,7 @@ function addChild() {
 
 function deleteChild(id) {
   const child = data.children.find(c => c.id === id);
-  if (!child || !confirm(`למחוק את ${child.name}?`)) return;
+  if (!child || !confirm('למחוק את ' + child.name + '?')) return;
 
   data.children = data.children.filter(c => c.id !== id);
   data.tasks.forEach(t => {
@@ -438,6 +645,7 @@ function deleteChild(id) {
 // ── Manage Tasks ──
 
 function renderManageTasks() {
+  if (!data) return;
   const list = document.getElementById('manage-tasks-list');
   list.innerHTML = data.tasks.map(task => {
     const daySelect = task.frequency === 'weekly' ? `
@@ -467,7 +675,7 @@ function renderManageTasks() {
           </div>
           <button class="btn-delete" onclick="deleteTask('${task.id}')">✕</button>
         </div>
-        ${daySelect ? `<div class="task-day-row">${daySelect}</div>` : ''}
+        ${daySelect ? '<div class="task-day-row">' + daySelect + '</div>' : ''}
         ${data.children.length > 1 ? `
           <div class="task-children-row">
             <span class="children-label">משויך ל:</span>
@@ -487,9 +695,6 @@ function toggleTaskChild(taskId, childId) {
     task.assignedTo = data.children.map(c => c.id).filter(id => id !== childId);
   } else if (task.assignedTo.includes(childId)) {
     task.assignedTo = task.assignedTo.filter(id => id !== childId);
-    if (task.assignedTo.length === 0) {
-      task.assignedTo = [];
-    }
   } else {
     task.assignedTo.push(childId);
     if (task.assignedTo.length === data.children.length) {
@@ -535,16 +740,16 @@ function selectEmoji(type, emoji, el) {
 
 function renderTaskChildPicker() {
   const container = document.getElementById('task-child-picker');
-  if (!container) return;
+  if (!container || !data) return;
   if (data.children.length === 0) {
     container.innerHTML = '<span class="children-label">אין ילדים עדיין</span>';
     return;
   }
   container.innerHTML = data.children.map(child => {
     const sel = newTaskChildIds.includes(child.id);
-    return `<span class="child-toggle ${sel ? 'active' : ''}"
-                  onclick="toggleNewTaskChild('${child.id}')"
-                  title="${child.name}">${child.avatar} ${child.name}</span>`;
+    return '<span class="child-toggle ' + (sel ? 'active' : '') + '"' +
+      ' onclick="toggleNewTaskChild(\'' + child.id + '\')"' +
+      ' title="' + child.name + '">' + child.avatar + ' ' + child.name + '</span>';
   }).join('');
 }
 
@@ -593,7 +798,7 @@ function addTask() {
 
 function deleteTask(id) {
   const task = data.tasks.find(t => t.id === id);
-  if (!task || !confirm(`למחוק את "${task.name}"?`)) return;
+  if (!task || !confirm('למחוק את "' + task.name + '"?')) return;
 
   data.tasks = data.tasks.filter(t => t.id !== id);
   saveData();
@@ -603,6 +808,7 @@ function deleteTask(id) {
 // ── Manage Rewards ──
 
 function renderManageRewards() {
+  if (!data) return;
   const list = document.getElementById('manage-rewards-list');
   list.innerHTML = data.rewards.map(r => `
     <div class="manage-item">
@@ -648,7 +854,7 @@ function addReward() {
 
 function deleteReward(id) {
   const reward = data.rewards.find(r => r.id === id);
-  if (!reward || !confirm(`למחוק את "${reward.name}"?`)) return;
+  if (!reward || !confirm('למחוק את "' + reward.name + '"?')) return;
 
   data.rewards = data.rewards.filter(r => r.id !== id);
   saveData();
@@ -669,8 +875,6 @@ function changePin() {
   alert('הקוד שונה בהצלחה');
 }
 
-// ── Reset ──
-
 function resetCoins() {
   if (!confirm('לאפס את המטבעות של כל הילדים?')) return;
   if (!confirm('בטוח? הפעולה לא ניתנת לביטול')) return;
@@ -680,10 +884,19 @@ function resetCoins() {
   renderParent();
 }
 
-async function resetAll() {
+function resetAll() {
   if (!confirm('למחוק את כל הנתונים? ילדים, משימות, מתנות ומטבעות?')) return;
   if (!confirm('בטוח לגמרי? הפעולה לא ניתנת לביטול!')) return;
-  data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+  const preserved = {
+    parentUid: data.parentUid,
+    parentEmail: data.parentEmail,
+    familyName: data.familyName,
+    createdAt: data.createdAt,
+  };
+
+  data = defaultFamilyData();
+  Object.assign(data, preserved);
   saveData();
   goHome();
 }
@@ -756,28 +969,102 @@ function showConfetti() {
   setTimeout(() => { container.innerHTML = ''; }, 2500);
 }
 
-// ── Cleanup old Service Worker ──
+// ── Admin Dashboard ──
+
+async function showAdmin() {
+  if (!isAdmin) return;
+  showScreen('screen-admin');
+  renderAdmin();
+}
+
+async function renderAdmin() {
+  if (!isAdmin) return;
+
+  const [familiesSnap, usersSnap] = await Promise.all([
+    db.ref('families').once('value'),
+    db.ref('users').once('value'),
+  ]);
+
+  const families = familiesSnap.val() || {};
+  const users = usersSnap.val() || {};
+
+  const familyEntries = Object.entries(families);
+  const userEntries = Object.entries(users);
+
+  let totalChildren = 0;
+  familyEntries.forEach(([, fam]) => {
+    totalChildren += (fam.children || []).length;
+  });
+
+  document.getElementById('admin-total-families').textContent = familyEntries.length;
+  document.getElementById('admin-total-children').textContent = totalChildren;
+
+  const today = new Date();
+
+  const familiesList = document.getElementById('admin-families-list');
+  familiesList.innerHTML = familyEntries.map(([, fam]) => {
+    const numKids = (fam.children || []).length;
+    return `<div class="manage-item">
+      <span class="item-emoji">👨‍👩‍👧‍👦</span>
+      <div class="item-info">
+        <div class="item-name">${fam.familyName || 'ללא שם'}</div>
+        <div class="item-detail">${numKids} ילדים · ${fam.parentEmail || ''}</div>
+      </div>
+    </div>`;
+  }).join('') || '<p class="empty-msg">אין משפחות</p>';
+
+  const inactiveList = document.getElementById('admin-inactive-list');
+  const inactive = userEntries.filter(([, u]) => {
+    if (!u.lastActive) return true;
+    const diff = (today - new Date(u.lastActive)) / (1000 * 60 * 60 * 24);
+    return diff >= 7;
+  });
+
+  if (inactive.length === 0) {
+    inactiveList.innerHTML = '<p class="empty-msg">כל המשפחות פעילות! 🎉</p>';
+  } else {
+    inactiveList.innerHTML = inactive.map(([, u]) => {
+      const daysSince = u.lastActive
+        ? Math.floor((today - new Date(u.lastActive)) / (1000 * 60 * 60 * 24))
+        : '?';
+      return `<div class="manage-item">
+        <span class="item-emoji">⏸️</span>
+        <div class="item-info">
+          <div class="item-name">${u.displayName || u.email}</div>
+          <div class="item-detail">${daysSince} ימים ללא שימוש</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const usageChart = document.getElementById('admin-usage-chart');
+  const usageData = userEntries.map(([, u]) => ({
+    name: u.displayName || u.email,
+    daysSince: u.lastActive
+      ? Math.floor((today - new Date(u.lastActive)) / (1000 * 60 * 60 * 24))
+      : 999,
+    lastActive: u.lastActive || null,
+  })).sort((a, b) => a.daysSince - b.daysSince);
+
+  usageChart.innerHTML = usageData.map(u => {
+    const cls = u.daysSince === 0 ? 'usage-today'
+      : u.daysSince <= 3 ? 'usage-recent'
+      : u.daysSince <= 7 ? 'usage-week'
+      : 'usage-inactive';
+    const label = !u.lastActive ? 'לא פעיל'
+      : u.daysSince === 0 ? 'היום'
+      : u.daysSince + ' ימים';
+    return `<div class="usage-bar ${cls}">
+      <span class="usage-name">${u.name}</span>
+      <span class="usage-days">${label}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Service Worker Cleanup ──
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs =>
     regs.forEach(r => r.unregister())
   );
 }
-
-// ── Init ──
-
-async function init() {
-  data = await loadData();
-  renderHome();
-}
-
-init();
-
-setInterval(async () => {
-  data = await loadData();
-  const activeScreen = document.querySelector('.screen.active');
-  if (!activeScreen) return;
-  if (activeScreen.id === 'screen-child') renderChild();
-  else if (activeScreen.id === 'screen-home') renderHome();
-  else if (activeScreen.id === 'screen-store') renderStore();
-}, 3000);

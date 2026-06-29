@@ -12,11 +12,63 @@
 <body>
   <div id="app">
 
+    <!-- Loading Screen -->
+    <div id="screen-loading" class="screen active">
+      <div class="loading-container">
+        <span class="loading-emoji">⭐</span>
+        <p>טוען...</p>
+      </div>
+    </div>
+
+    <!-- Login / Register Screen -->
+    <div id="screen-login" class="screen">
+      <div class="login-container">
+        <div class="login-header">
+          <span class="login-logo">⭐</span>
+          <h1>מעקב משימות</h1>
+          <p class="login-subtitle">ניהול משימות יומיות לילדים</p>
+        </div>
+
+        <div class="beta-banner">
+          ⚠️ האפליקציה בשלבי פיתוח ועלולה להכיל באגים
+        </div>
+
+        <div class="login-tabs">
+          <button class="login-tab active" onclick="showLoginTab('login')">כניסה</button>
+          <button class="login-tab" onclick="showLoginTab('register')">הרשמה</button>
+        </div>
+
+        <div id="login-form" class="login-form">
+          <input type="email" id="login-email" placeholder="אימייל" autocomplete="email">
+          <input type="password" id="login-password" placeholder="סיסמה" autocomplete="current-password">
+          <button class="btn-primary" onclick="loginUser()">כניסה</button>
+          <p id="login-error" class="error-text"></p>
+          <button class="btn-link" onclick="resetPassword()">שכחתי סיסמה</button>
+        </div>
+
+        <div id="register-form" class="login-form" style="display:none">
+          <input type="text" id="register-name" placeholder="שם המשפחה" maxlength="30">
+          <input type="email" id="register-email" placeholder="אימייל" autocomplete="email">
+          <input type="password" id="register-password" placeholder="סיסמה (לפחות 6 תווים)" autocomplete="new-password">
+          <label class="terms-check">
+            <input type="checkbox" id="register-terms">
+            <span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank">תנאי השימוש</a> ול<a href="privacy.html" target="_blank">מדיניות הפרטיות</a></span>
+          </label>
+          <button class="btn-primary" onclick="registerUser()">הרשמה</button>
+          <p id="register-error" class="error-text"></p>
+        </div>
+      </div>
+    </div>
+
     <!-- Home: Child Selection -->
-    <div id="screen-home" class="screen active">
+    <div id="screen-home" class="screen">
       <div class="header">
-        <h1>👋 מי אני?</h1>
-        <button class="btn-icon parent-btn" onclick="showPinPrompt()">⚙️</button>
+        <h1>👋 <span id="family-name">מי אני?</span></h1>
+        <div class="header-buttons">
+          <button id="admin-btn" class="btn-icon" onclick="showAdmin()" style="display:none" title="דשבורד מנהלת">📊</button>
+          <button class="btn-icon parent-btn" onclick="showPinPrompt()">⚙️</button>
+          <button class="btn-icon" onclick="logoutUser()" title="יציאה">🚪</button>
+        </div>
       </div>
       <div id="children-grid" class="children-grid"></div>
       <p id="no-children-msg" class="empty-msg">
@@ -194,6 +246,46 @@
           <p class="reset-desc">מחיקת כל הנתונים — ילדים, משימות, מתנות ומטבעות</p>
           <button class="btn-danger" onclick="resetAll()">⚠️ אפס הכל</button>
         </div>
+
+        <div class="add-form" style="margin-top:16px">
+          <h3>חשבון</h3>
+          <p class="reset-desc" id="account-info"></p>
+          <button class="btn-danger" onclick="logoutUser()">🚪 יציאה מהחשבון</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="screen-admin" class="screen">
+      <div class="header">
+        <button class="btn-icon" onclick="goHome()">→</button>
+        <h1>📊 דשבורד מנהלת</h1>
+      </div>
+
+      <div class="admin-stats">
+        <div class="stat-card">
+          <span class="stat-number" id="admin-total-families">0</span>
+          <span class="stat-label">משפחות</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="admin-total-children">0</span>
+          <span class="stat-label">ילדים</span>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <h3>📋 כל המשפחות</h3>
+        <div id="admin-families-list" class="manage-list"></div>
+      </div>
+
+      <div class="admin-section">
+        <h3>⚠️ לא פעילות (שבוע+)</h3>
+        <div id="admin-inactive-list" class="manage-list"></div>
+      </div>
+
+      <div class="admin-section">
+        <h3>📈 התפלגות שימוש</h3>
+        <div id="admin-usage-chart" class="usage-chart"></div>
       </div>
     </div>
 
@@ -214,6 +306,10 @@
     <div id="confetti-container" class="confetti-container"></div>
 
   </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
