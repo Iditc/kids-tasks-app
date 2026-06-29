@@ -54,6 +54,11 @@
         <div id="weekly-tasks" class="task-list"></div>
       </div>
 
+      <div id="once-section" class="task-section">
+        <h2>🎯 משימות מיוחדות</h2>
+        <div id="once-tasks" class="task-list"></div>
+      </div>
+
       <button class="store-btn" onclick="showStore()">
         🎁 חנות מתנות
       </button>
@@ -95,6 +100,21 @@
           <div class="avatar-picker" id="avatar-picker"></div>
           <button class="btn-primary" onclick="addChild()">הוסף</button>
         </div>
+        <div class="add-form" style="margin-top:16px">
+          <h3>🎁 בונוס מטבעות</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>ילד/ה</label>
+              <select id="bonus-child"></select>
+            </div>
+            <div class="form-group">
+              <label>כמות</label>
+              <input type="number" id="bonus-amount" value="5" min="1" max="500">
+            </div>
+          </div>
+          <input type="text" id="bonus-reason" placeholder="סיבה (לא חובה)" maxlength="30">
+          <button class="btn-primary" onclick="giveBonus()">תן בונוס</button>
+        </div>
       </div>
 
       <!-- Tasks Tab -->
@@ -113,6 +133,7 @@
               <select id="new-task-freq" onchange="onFreqChange()">
                 <option value="daily">יומית</option>
                 <option value="weekly">שבועית</option>
+                <option value="once">חד-פעמית</option>
               </select>
             </div>
           </div>

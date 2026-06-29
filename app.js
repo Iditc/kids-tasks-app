@@ -1,7 +1,7 @@
 const AVATARS = ['🦁','🐱','🐶','🦊','🐰','🐼','🦄','🐸','🐯','🐨','❤️','💎','😊','😎','🌟','🦋','🌈','👑','🤴','👸','🐝','🌸','💜','🔥','🍀','🎀','😺'];
 const TASK_EMOJIS = ['👕','🥣','💊','🪥','🛏️','📚','⭐','🎒','🏃','🧹','🐕','🎹','🖌️','✏️','🧺','🛁','🎸','🎻','🎤','🥁','🎵','⚽','🏀','🏊','🤸','🥋','🚴','⛺','🔥','🏕️','💉','🩺','🏥','🩸','💊','🧪','🎨','🧩','💻','📐','🔬','🤝','✂️','💅'];
 
-const REWARD_EMOJIS = ['🎲','🎬','📱','🍦','🎮','🛝','🧩','📖','🎨','🏊'];
+const REWARD_EMOJIS = ['🎲','🎬','📱','🍦','🎮','🛝','🧩','📖','🎨','🏊','♟️','💰','💵','🪙','🎁','🧸','🎠','🎢','🎪','🏆','👟','👗','🎧','🍕','🍫','🛍️'];
 const DAYS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 
 const DEFAULT_DATA = {
@@ -78,6 +78,7 @@ function getWeekKey() {
 }
 
 function completionKey(childId, taskId, frequency) {
+  if (frequency === 'once') return `${childId}_${taskId}_once`;
   const dk = frequency === 'weekly' ? getWeekKey() : getDateKey();
   return `${childId}_${taskId}_${dk}`;
 }
@@ -92,6 +93,7 @@ function isTaskForChild(task, childId) {
 
 function isTaskVisibleToday(task) {
   if (task.frequency === 'daily') return true;
+  if (task.frequency === 'once') return true;
   if (task.dayOfWeek === null || task.dayOfWeek === undefined) return true;
   return new Date().getDay() === task.dayOfWeek;
 }
@@ -146,11 +148,16 @@ function selectChild(id) {
 // ── Child Dashboard ──
 
 function getChildTasks(childId, frequency) {
-  return data.tasks.filter(t =>
-    t.frequency === frequency &&
-    isTaskForChild(t, childId) &&
-    isTaskVisibleToday(t)
-  );
+  return data.tasks.filter(t => {
+    if (frequency === 'once') {
+      return t.frequency === 'once' &&
+        isTaskForChild(t, childId) &&
+        !isCompleted(childId, t.id, 'once');
+    }
+    return t.frequency === frequency &&
+      isTaskForChild(t, childId) &&
+      isTaskVisibleToday(t);
+  });
 }
 
 function renderChild() {
@@ -163,12 +170,15 @@ function renderChild() {
 
   const dailyTasks = getChildTasks(child.id, 'daily');
   const weeklyTasks = getChildTasks(child.id, 'weekly');
+  const onceTasks = getChildTasks(child.id, 'once');
 
   renderTaskList('daily-tasks', dailyTasks, child.id);
   renderTaskList('weekly-tasks', weeklyTasks, child.id);
+  renderTaskList('once-tasks', onceTasks, child.id);
 
   document.getElementById('daily-section').style.display = dailyTasks.length ? 'block' : 'none';
   document.getElementById('weekly-section').style.display = weeklyTasks.length ? 'block' : 'none';
+  document.getElementById('once-section').style.display = onceTasks.length ? 'block' : 'none';
 
   const completedDaily = dailyTasks.filter(t => isCompleted(child.id, t.id, 'daily')).length;
   const totalDaily = dailyTasks.length;
@@ -314,6 +324,7 @@ function renderParent() {
   renderEmojiPicker('task-emoji-picker', TASK_EMOJIS, 'task');
   renderEmojiPicker('reward-emoji-picker', REWARD_EMOJIS, 'reward');
   renderTaskChildPicker();
+  renderBonusSelect();
 }
 
 // ── Tabs ──
@@ -328,6 +339,36 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ── Manage Children ──
+
+function renderBonusSelect() {
+  const select = document.getElementById('bonus-child');
+  if (!select) return;
+  select.innerHTML = data.children.map(c =>
+    `<option value="${c.id}">${c.avatar} ${c.name}</option>`
+  ).join('');
+}
+
+function giveBonus() {
+  const childId = document.getElementById('bonus-child').value;
+  const amount = parseInt(document.getElementById('bonus-amount').value) || 0;
+  const reason = document.getElementById('bonus-reason').value.trim();
+  if (!childId || amount < 1) return;
+
+  const child = data.children.find(c => c.id === childId);
+  if (!child) return;
+
+  const msg = reason
+    ? `לתת ${amount} מטבעות בונוס ל${child.name} על "${reason}"?`
+    : `לתת ${amount} מטבעות בונוס ל${child.name}?`;
+  if (!confirm(msg)) return;
+
+  child.coins += amount;
+  saveData();
+  document.getElementById('bonus-amount').value = '5';
+  document.getElementById('bonus-reason').value = '';
+  alert(`${child.name} קיבל/ה ${amount} מטבעות! 🎉`);
+  renderManageChildren();
+}
 
 function renderManageChildren() {
   const list = document.getElementById('manage-children-list');
@@ -417,7 +458,7 @@ function renderManageTasks() {
           <span class="item-emoji">${task.emoji}</span>
           <div class="item-info">
             <div class="item-name">${task.name}</div>
-            <div class="item-detail">${task.frequency === 'daily' ? 'יומית' : 'שבועית'}</div>
+            <div class="item-detail">${task.frequency === 'daily' ? 'יומית' : task.frequency === 'weekly' ? 'שבועית' : 'חד-פעמית'}</div>
           </div>
           <div class="coins-edit">
             <input type="number" class="coins-input" value="${task.coins}" min="1" max="50"
