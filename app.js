@@ -245,6 +245,8 @@ auth.onAuthStateChanged(async (user) => {
 
       if (userData && userData.familyId) {
         familyId = userData.familyId;
+        console.log('DEBUG familyId:', familyId, 'uid:', user.uid);
+        alert('DEBUG: familyId=' + familyId);
         attachListener();
         showScreen('screen-home');
 
