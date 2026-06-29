@@ -200,6 +200,7 @@ function authErrorMessage(code) {
 // ── Auth State Listener ──
 
 auth.onAuthStateChanged(async (user) => {
+  alert('AUTH: ' + (user ? user.email : 'no user'));
   try {
     if (user) {
       currentUser = user;
