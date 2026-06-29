@@ -124,7 +124,7 @@ async function registerUser() {
     const familiesSnap = await db.ref('families').once('value');
     const allFamilies = familiesSnap.val() || {};
     for (const [fid, fam] of Object.entries(allFamilies)) {
-      if (fam.parentEmail === email) {
+      if (fam.parentEmail && fam.parentEmail.toLowerCase() === email.toLowerCase()) {
         existingFamilyId = fid;
         await db.ref('families/' + fid + '/parentUid').set(uid);
         break;
@@ -200,7 +200,6 @@ function authErrorMessage(code) {
 // ── Auth State Listener ──
 
 auth.onAuthStateChanged(async (user) => {
-  alert('AUTH: ' + (user ? user.email : 'no user'));
   try {
     if (user) {
       currentUser = user;
@@ -224,7 +223,7 @@ auth.onAuthStateChanged(async (user) => {
         let foundFamilyId = null;
 
         for (const [fid, fam] of Object.entries(allFamilies)) {
-          if (fam.parentEmail === user.email || fam.parentUid === user.uid) {
+          if ((fam.parentEmail && fam.parentEmail.toLowerCase() === user.email.toLowerCase()) || fam.parentUid === user.uid) {
             foundFamilyId = fid;
             if (fam.parentUid !== user.uid) {
               await db.ref('families/' + fid + '/parentUid').set(user.uid);
@@ -246,8 +245,6 @@ auth.onAuthStateChanged(async (user) => {
 
       if (userData && userData.familyId) {
         familyId = userData.familyId;
-        console.log('DEBUG familyId:', familyId, 'uid:', user.uid);
-        alert('DEBUG: familyId=' + familyId);
         attachListener();
         showScreen('screen-home');
 
@@ -394,7 +391,6 @@ function goToChild() {
 // ── Home Screen ──
 
 function renderHome() {
-  console.log('renderHome called, data:', data ? 'exists' : 'null', 'children:', data ? data.children : 'N/A');
   if (!data) return;
   const grid = document.getElementById('children-grid');
   const msg = document.getElementById('no-children-msg');
