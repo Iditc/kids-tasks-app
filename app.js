@@ -115,38 +115,40 @@ async function registerUser() {
 
   try {
     registering = true;
-    const cred = await auth.createUserWithEmailAndPassword(email, password);
-    const uid = cred.user.uid;
-    const newFamilyId = genId();
-
-    if (email.toLowerCase() === ADMIN_EMAIL) {
-      await db.ref('admin/uids/' + uid).set(true);
-    }
 
     const countSnap = await db.ref('meta/familyCount').once('value');
     const familyCount = countSnap.val() || 0;
 
     if (familyCount >= MAX_FAMILIES) {
-      await cred.user.delete();
+      registering = false;
       errorEl.textContent = 'מצטערים, ההרשמה סגורה כרגע 😔 זוהי גרסת בטא מוגבלת ל-' + MAX_FAMILIES + ' משפחות. נסו שוב מאוחר יותר!';
       return;
     }
+
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const uid = cred.user.uid;
+    const newFamilyId = genId();
 
     const familyData = defaultFamilyData();
     familyData.parentUid = uid;
     familyData.parentEmail = email;
     familyData.familyName = name;
     familyData.createdAt = new Date().toISOString();
-    await db.ref('families/' + newFamilyId).set(familyData);
 
-    await db.ref('meta/familyCount').set(familyCount + 1);
-
-    await db.ref('users/' + uid).set({
+    const updates = {};
+    updates['families/' + newFamilyId] = familyData;
+    updates['users/' + uid] = {
       email: email,
       displayName: name,
       familyId: newFamilyId,
       lastActive: new Date().toISOString().split('T')[0],
-    });
+    };
+    updates['meta/familyCount'] = familyCount + 1;
+    if (email.toLowerCase() === ADMIN_EMAIL) {
+      updates['admin/uids/' + uid] = true;
+    }
+
+    await db.ref().update(updates);
 
     registering = false;
     alert('נרשמת בהצלחה! 🎉\nלחצ/י על כפתור הכניסה כדי להיכנס.');
@@ -155,7 +157,7 @@ async function registerUser() {
     document.getElementById('login-email').value = email;
   } catch (e) {
     registering = false;
-    errorEl.textContent = authErrorMessage(e.code);
+    errorEl.textContent = e.message || authErrorMessage(e.code);
   }
 }
 
