@@ -114,50 +114,24 @@ async function registerUser() {
   if (!terms) { errorEl.textContent = 'נא לאשר את תנאי השימוש'; return; }
 
   try {
-    registering = true;
-
     const countSnap = await db.ref('meta/familyCount').once('value');
-    const familyCount = countSnap.val() || 0;
-
-    if (familyCount >= MAX_FAMILIES) {
-      registering = false;
+    if ((countSnap.val() || 0) >= MAX_FAMILIES) {
       errorEl.textContent = 'מצטערים, ההרשמה סגורה כרגע 😔 זוהי גרסת בטא מוגבלת ל-' + MAX_FAMILIES + ' משפחות. נסו שוב מאוחר יותר!';
       return;
     }
 
+    registering = true;
     const cred = await auth.createUserWithEmailAndPassword(email, password);
-    const uid = cred.user.uid;
-    const newFamilyId = genId();
-
-    const familyData = defaultFamilyData();
-    familyData.parentUid = uid;
-    familyData.parentEmail = email;
-    familyData.familyName = name;
-    familyData.createdAt = new Date().toISOString();
-
-    const updates = {};
-    updates['families/' + newFamilyId] = familyData;
-    updates['users/' + uid] = {
-      email: email,
-      displayName: name,
-      familyId: newFamilyId,
-      lastActive: new Date().toISOString().split('T')[0],
-    };
-    updates['meta/familyCount'] = familyCount + 1;
-    if (email.toLowerCase() === ADMIN_EMAIL) {
-      updates['admin/uids/' + uid] = true;
-    }
-
-    await db.ref().update(updates);
-
+    await cred.user.updateProfile({ displayName: name });
     registering = false;
+
     alert('נרשמת בהצלחה! 🎉\nלחצ/י על כפתור הכניסה כדי להיכנס.');
     await auth.signOut();
     showLoginTab('login');
     document.getElementById('login-email').value = email;
   } catch (e) {
     registering = false;
-    errorEl.textContent = e.message || authErrorMessage(e.code);
+    errorEl.textContent = authErrorMessage(e.code);
   }
 }
 
@@ -226,28 +200,29 @@ auth.onAuthStateChanged(async (user) => {
       let userData = userSnap.val();
 
       if (!userData || !userData.familyId) {
-        const familiesSnap = await db.ref('families').once('value');
-        const allFamilies = familiesSnap.val() || {};
-        let foundFamilyId = null;
+        const newFamilyId = genId();
+        const familyData = defaultFamilyData();
+        familyData.parentUid = user.uid;
+        familyData.parentEmail = user.email;
+        familyData.familyName = user.displayName || user.email;
+        familyData.createdAt = new Date().toISOString();
 
-        for (const [fid, fam] of Object.entries(allFamilies)) {
-          if ((fam.parentEmail && fam.parentEmail.toLowerCase() === user.email.toLowerCase()) || fam.parentUid === user.uid) {
-            foundFamilyId = fid;
-            if (fam.parentUid !== user.uid) {
-              await db.ref('families/' + fid + '/parentUid').set(user.uid);
-            }
-            break;
-          }
-        }
+        await db.ref('families/' + newFamilyId).set(familyData);
 
-        if (foundFamilyId) {
-          userData = {
-            email: user.email,
-            displayName: allFamilies[foundFamilyId].familyName || user.email,
-            familyId: foundFamilyId,
-            lastActive: today,
-          };
-          await db.ref('users/' + user.uid).set(userData);
+        userData = {
+          email: user.email,
+          displayName: user.displayName || user.email,
+          familyId: newFamilyId,
+          lastActive: today,
+        };
+        await db.ref('users/' + user.uid).set(userData);
+
+        const countSnap = await db.ref('meta/familyCount').once('value');
+        await db.ref('meta/familyCount').set((countSnap.val() || 0) + 1);
+
+        if (user.email.toLowerCase() === ADMIN_EMAIL) {
+          await db.ref('admin/uids/' + user.uid).set(true);
+          isAdmin = true;
         }
       }
 
