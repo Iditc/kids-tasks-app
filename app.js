@@ -185,9 +185,7 @@ auth.onAuthStateChanged(async (user) => {
   try {
     if (user) {
       currentUser = user;
-
       const today = new Date().toISOString().split('T')[0];
-      db.ref('users/' + user.uid + '/lastActive').set(today).catch(() => {});
 
       let adminResult = false;
       try {
@@ -196,34 +194,49 @@ auth.onAuthStateChanged(async (user) => {
       } catch (e) {}
       isAdmin = adminResult;
 
-      const userSnap = await db.ref('users/' + user.uid).once('value');
+      let userSnap;
+      try {
+        userSnap = await db.ref('users/' + user.uid).once('value');
+      } catch (e) {
+        alert('שגיאה בקריאת נתוני משתמש: ' + e.message);
+        showScreen('screen-login');
+        return;
+      }
       let userData = userSnap.val();
 
       if (!userData || !userData.familyId) {
-        const newFamilyId = genId();
-        const familyData = defaultFamilyData();
-        familyData.parentUid = user.uid;
-        familyData.parentEmail = user.email;
-        familyData.familyName = user.displayName || user.email;
-        familyData.createdAt = new Date().toISOString();
+        try {
+          const newFamilyId = genId();
+          const familyData = defaultFamilyData();
+          familyData.parentUid = user.uid;
+          familyData.parentEmail = user.email;
+          familyData.familyName = user.displayName || user.email;
+          familyData.createdAt = new Date().toISOString();
 
-        await db.ref('families/' + newFamilyId).set(familyData);
+          await db.ref('families/' + newFamilyId).set(familyData);
 
-        userData = {
-          email: user.email,
-          displayName: user.displayName || user.email,
-          familyId: newFamilyId,
-          lastActive: today,
-        };
-        await db.ref('users/' + user.uid).set(userData);
+          userData = {
+            email: user.email,
+            displayName: user.displayName || user.email,
+            familyId: newFamilyId,
+            lastActive: today,
+          };
+          await db.ref('users/' + user.uid).set(userData);
 
-        const countSnap = await db.ref('meta/familyCount').once('value');
-        await db.ref('meta/familyCount').set((countSnap.val() || 0) + 1);
+          const countSnap = await db.ref('meta/familyCount').once('value');
+          await db.ref('meta/familyCount').set((countSnap.val() || 0) + 1);
 
-        if (user.email.toLowerCase() === ADMIN_EMAIL) {
-          await db.ref('admin/uids/' + user.uid).set(true);
-          isAdmin = true;
+          if (user.email.toLowerCase() === ADMIN_EMAIL) {
+            await db.ref('admin/uids/' + user.uid).set(true);
+            isAdmin = true;
+          }
+        } catch (e) {
+          alert('שגיאה ביצירת חשבון: ' + e.message);
+          showScreen('screen-login');
+          return;
         }
+      } else {
+        db.ref('users/' + user.uid + '/lastActive').set(today).catch(() => {});
       }
 
       if (userData && userData.familyId) {
