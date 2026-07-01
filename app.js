@@ -16,6 +16,7 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 const ADMIN_EMAIL = 'cohen.idit10@gmail.com';
+const MAX_FAMILIES = 25;
 
 // ── Constants ──
 
@@ -112,6 +113,19 @@ async function registerUser() {
   if (!terms) { errorEl.textContent = 'נא לאשר את תנאי השימוש'; return; }
 
   try {
+    const familiesSnap = await db.ref('families').once('value');
+    const allFamilies = familiesSnap.val() || {};
+    const familyCount = Object.keys(allFamilies).length;
+
+    const hasExisting = Object.values(allFamilies).some(
+      fam => fam.parentEmail && fam.parentEmail.toLowerCase() === email.toLowerCase()
+    );
+
+    if (!hasExisting && familyCount >= MAX_FAMILIES) {
+      errorEl.textContent = 'מצטערים, ההרשמה סגורה כרגע 😔 זוהי גרסת בטא מוגבלת ל-' + MAX_FAMILIES + ' משפחות. נסו שוב מאוחר יותר!';
+      return;
+    }
+
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     const uid = cred.user.uid;
     const newFamilyId = genId();
@@ -121,8 +135,6 @@ async function registerUser() {
     }
 
     let existingFamilyId = null;
-    const familiesSnap = await db.ref('families').once('value');
-    const allFamilies = familiesSnap.val() || {};
     for (const [fid, fam] of Object.entries(allFamilies)) {
       if (fam.parentEmail && fam.parentEmail.toLowerCase() === email.toLowerCase()) {
         existingFamilyId = fid;
