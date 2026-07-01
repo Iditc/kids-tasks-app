@@ -60,6 +60,7 @@ function defaultFamilyData() {
 
 // ── State ──
 
+let registering = false;
 let currentUser = null;
 let familyId = null;
 let isAdmin = false;
@@ -113,6 +114,7 @@ async function registerUser() {
   if (!terms) { errorEl.textContent = 'נא לאשר את תנאי השימוש'; return; }
 
   try {
+    registering = true;
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     const uid = cred.user.uid;
     const newFamilyId = genId();
@@ -121,34 +123,23 @@ async function registerUser() {
       await db.ref('admin/uids/' + uid).set(true);
     }
 
-    const familiesSnap = await db.ref('families').once('value');
-    const allFamilies = familiesSnap.val() || {};
-    const familyCount = Object.keys(allFamilies).length;
+    const countSnap = await db.ref('meta/familyCount').once('value');
+    const familyCount = countSnap.val() || 0;
 
-    let existingFamilyId = null;
-    for (const [fid, fam] of Object.entries(allFamilies)) {
-      if (fam.parentEmail && fam.parentEmail.toLowerCase() === email.toLowerCase()) {
-        existingFamilyId = fid;
-        await db.ref('families/' + fid + '/parentUid').set(uid);
-        break;
-      }
-    }
-
-    if (!existingFamilyId && familyCount >= MAX_FAMILIES) {
+    if (familyCount >= MAX_FAMILIES) {
       await cred.user.delete();
       errorEl.textContent = 'מצטערים, ההרשמה סגורה כרגע 😔 זוהי גרסת בטא מוגבלת ל-' + MAX_FAMILIES + ' משפחות. נסו שוב מאוחר יותר!';
       return;
     }
 
-    if (!existingFamilyId) {
-      const familyData = defaultFamilyData();
-      familyData.parentUid = uid;
-      familyData.parentEmail = email;
-      familyData.familyName = name;
-      familyData.createdAt = new Date().toISOString();
-      await db.ref('families/' + newFamilyId).set(familyData);
-      existingFamilyId = newFamilyId;
-    }
+    const familyData = defaultFamilyData();
+    familyData.parentUid = uid;
+    familyData.parentEmail = email;
+    familyData.familyName = name;
+    familyData.createdAt = new Date().toISOString();
+    await db.ref('families/' + newFamilyId).set(familyData);
+
+    await db.ref('meta/familyCount').set(familyCount + 1);
 
     await db.ref('users/' + uid).set({
       email: email,
@@ -157,10 +148,13 @@ async function registerUser() {
       lastActive: new Date().toISOString().split('T')[0],
     });
 
+    registering = false;
     alert('נרשמת בהצלחה! 🎉\nלחצ/י על כפתור הכניסה כדי להיכנס.');
+    await auth.signOut();
     showLoginTab('login');
     document.getElementById('login-email').value = email;
   } catch (e) {
+    registering = false;
     errorEl.textContent = authErrorMessage(e.code);
   }
 }
@@ -211,6 +205,7 @@ function authErrorMessage(code) {
 // ── Auth State Listener ──
 
 auth.onAuthStateChanged(async (user) => {
+  if (registering) return;
   try {
     if (user) {
       currentUser = user;
