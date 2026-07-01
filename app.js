@@ -312,7 +312,9 @@ function detachListener() {
 
 function saveData() {
   if (!familyId || !data) return;
-  db.ref('families/' + familyId).set(data).catch(() => {});
+  db.ref('families/' + familyId).set(data).catch(e => {
+    alert('שגיאה בשמירה: ' + e.message);
+  });
 }
 
 function renderActiveScreen() {
