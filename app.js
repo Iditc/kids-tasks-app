@@ -144,7 +144,7 @@ async function registerUser() {
     await db.ref('users/' + uid).set({
       email: email,
       displayName: name,
-      familyId: existingFamilyId,
+      familyId: newFamilyId,
       lastActive: new Date().toISOString().split('T')[0],
     });
 
