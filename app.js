@@ -113,19 +113,6 @@ async function registerUser() {
   if (!terms) { errorEl.textContent = 'נא לאשר את תנאי השימוש'; return; }
 
   try {
-    const familiesSnap = await db.ref('families').once('value');
-    const allFamilies = familiesSnap.val() || {};
-    const familyCount = Object.keys(allFamilies).length;
-
-    const hasExisting = Object.values(allFamilies).some(
-      fam => fam.parentEmail && fam.parentEmail.toLowerCase() === email.toLowerCase()
-    );
-
-    if (!hasExisting && familyCount >= MAX_FAMILIES) {
-      errorEl.textContent = 'מצטערים, ההרשמה סגורה כרגע 😔 זוהי גרסת בטא מוגבלת ל-' + MAX_FAMILIES + ' משפחות. נסו שוב מאוחר יותר!';
-      return;
-    }
-
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     const uid = cred.user.uid;
     const newFamilyId = genId();
@@ -134,6 +121,10 @@ async function registerUser() {
       await db.ref('admin/uids/' + uid).set(true);
     }
 
+    const familiesSnap = await db.ref('families').once('value');
+    const allFamilies = familiesSnap.val() || {};
+    const familyCount = Object.keys(allFamilies).length;
+
     let existingFamilyId = null;
     for (const [fid, fam] of Object.entries(allFamilies)) {
       if (fam.parentEmail && fam.parentEmail.toLowerCase() === email.toLowerCase()) {
@@ -141,6 +132,12 @@ async function registerUser() {
         await db.ref('families/' + fid + '/parentUid').set(uid);
         break;
       }
+    }
+
+    if (!existingFamilyId && familyCount >= MAX_FAMILIES) {
+      await cred.user.delete();
+      errorEl.textContent = 'מצטערים, ההרשמה סגורה כרגע 😔 זוהי גרסת בטא מוגבלת ל-' + MAX_FAMILIES + ' משפחות. נסו שוב מאוחר יותר!';
+      return;
     }
 
     if (!existingFamilyId) {
