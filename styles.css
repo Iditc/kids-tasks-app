@@ -870,6 +870,19 @@ body {
   text-decoration: underline;
 }
 
+.help-link-login {
+  display: block;
+  text-align: center;
+  color: var(--primary);
+  font-size: 0.95rem;
+  margin: 8px 0 16px;
+  text-decoration: none;
+}
+
+.help-link-login:hover {
+  text-decoration: underline;
+}
+
 /* Admin Dashboard */
 .admin-stats {
   display: grid;
